@@ -1,0 +1,26 @@
+/* src/index.css */
+@import "tailwindcss";
+
+/* Configuración del tema para Tailwind v4 */
+@theme {
+  --color-lol-bg: #010a13;
+  --color-lol-blue: #0ac8b9;
+  --color-lol-gold: #c89b3c;
+  --color-lol-goldLight: #f0e6d2;
+  --color-lol-gray: #1e2328;
+  --color-lol-border: #3c3c41;
+  --color-lol-red: #ff4655;
+}
+
+/* Clases base globales */
+@layer base {
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden; /* Elimina la barra de scroll */
+    background-color: var(--color-lol-bg);
+    color: var(--color-lol-goldLight);
+  }
+}
