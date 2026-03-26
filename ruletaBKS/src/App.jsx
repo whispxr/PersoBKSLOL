@@ -4,21 +4,29 @@ import { GameContext } from './context/GameContext';
 import Header from './components/Layout/Header';
 import TeamPanel from './components/Layout/TeamPanel';
 import RouletteCenter from './components/Roulette/RouletteCenter';
-import SettingsModal from './components/Settings/SettingsModal'; // <-- IMPORTANTE
+import SettingsModal from './components/Settings/SettingsModal';
 
 export default function App() {
   const { isSettingsOpen } = useContext(GameContext);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-lol-bg text-lol-goldLight font-sans selection:bg-lol-blue selection:text-white relative">
-      <div className="flex flex-col h-full w-full">
+    // Fondo profundo BKS Pro Draft (Azul marino/Negro) con patrón Hextech sutil (decorativo)
+    <div className="h-screen w-screen overflow-hidden bg-lol-bg text-lol-goldLight font-sans relative selection:bg-lol-blue selection:text-white uppercase tracking-widest text-xs">
+      
+      {/* Patrón Hextech decorativo de fondo (Simulado con líneas radiales y degradado) */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-lol-bg via-lol-bg/95 to-lol-bg opacity-30 z-0">
+        {/* Aquí en el futuro se podría usar una imagen SVG Hextech real para mayor realismo */}
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0%_1px,transparent_1px_100%)] opacity-10"></div>
+      </div>
+
+      <div className="flex flex-col h-full w-full relative z-10">
         
         <Header />
 
         <div className="flex-1 flex flex-row overflow-hidden">
           <TeamPanel team="blue" title="Equipo Azul" />
           
-          <main className="flex-1 relative flex items-center justify-center bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-[#0a1428] to-lol-bg border-x border-lol-border/50 shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]">
+          <main className="flex-1 relative flex items-center justify-center border-x border-lol-border/30">
             <RouletteCenter />
           </main>
 
@@ -26,8 +34,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Aquí renderizamos el Modal si está abierto */}
-      {isSettingsOpen && <SettingsModal />} 
+      {isSettingsOpen && <SettingsModal />}
     </div>
   );
 }

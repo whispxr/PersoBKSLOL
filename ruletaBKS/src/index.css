@@ -1,14 +1,28 @@
 /* src/index.css */
 @import "tailwindcss";
 
+
 /* Configuración del tema para Tailwind v4 */
 @theme {
+  /* Fondo más profundo y oscuro del Client Draft (Hex de la imagen) */
   --color-lol-bg: #010a13;
+  
+  /* Azul cian Hextech de la imagen */
   --color-lol-blue: #0ac8b9;
+  
+  /* Oro metálico rico de la imagen para los marcos */
   --color-lol-gold: #c89b3c;
+  
+  /* Crema de los nombres de los invocadores de la imagen */
   --color-lol-goldLight: #f0e6d2;
-  --color-lol-gray: #1e2328;
+  
+  /* Fondo interno de los paneles de equipo y botones */
+  --color-lol-gray: #0a1428;
+  
+  /* Borde sutil interno de los slots de jugador */
   --color-lol-border: #3c3c41;
+  
+  /* Rojo eléctrico de la imagen */
   --color-lol-red: #ff4655;
 }
 
@@ -22,5 +36,13 @@
     overflow: hidden; /* Elimina la barra de scroll */
     background-color: var(--color-lol-bg);
     color: var(--color-lol-goldLight);
+    
+    /* Fuente pro-level limpia (Oswald) */
+    font-family: 'Montserrat', 'Oswald', 'Open Sans', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* Para que todo el texto sea uppercase y tracking-widest por defecto */
+  * {
+    @apply uppercase tracking-widest text-xs;
   }
 }

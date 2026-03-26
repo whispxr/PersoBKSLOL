@@ -10,7 +10,6 @@ import supportIcon from '../assets/support.png';
 import spinAudio from '../assets/spin.mp3';
 import lockAudio from '../assets/lock.mp3';
 
-// MAGIA DE VITE: Importamos todos los mp3 de la carpeta invocadores de un solo golpe
 const announcerVoices = import.meta.glob('../assets/invocadores/*.mp3', { eager: true });
 
 export const GameContext = createContext();
@@ -35,7 +34,6 @@ export const GameProvider = ({ children }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [teams, setTeams] = useState({ blue: [], red: [] });
 
-  // Recibimos el winnerName como segundo parámetro (opcional)
   const playSound = (type, winnerName = null) => {
     try {
       if (type === 'spin') {
@@ -47,19 +45,14 @@ export const GameProvider = ({ children }) => {
         impact.volume = 0.4; 
         impact.play();
 
-        // 2. Si nos pasaron un nombre, buscamos su archivo de voz
         if (winnerName) {
           const voiceModule = announcerVoices[`../assets/invocadores/${winnerName}.mp3`];
-          
           if (voiceModule) {
-            // Un pequeño retraso (300ms) para que el golpe suene primero y luego el nombre
             setTimeout(() => {
               const voiceSound = new Audio(voiceModule.default);
-              voiceSound.volume = 1.0; // Voz a tope para que destaque
+              voiceSound.volume = 1.0; 
               voiceSound.play();
             }, 300);
-          } else {
-            console.log(`No se encontró audio para el invocador: ${winnerName}`);
           }
         }
       }
@@ -111,6 +104,35 @@ export const GameProvider = ({ children }) => {
     });
   };
 
+  // --- NUEVA FUNCIÓN: REINICIAR ---
+  const resetGame = () => {
+    if(window.confirm("¿Estás seguro de reiniciar la partida? Se borrarán los equipos actuales.")) {
+      setTeams({ blue: [], red: [] });
+      setPlayers(Array(10).fill('')); // Vaciamos los inputs
+    }
+  };
+
+  // --- NUEVA FUNCIÓN: COPIAR A DISCORD ---
+  const copyTeamsToClipboard = async () => {
+    let text = "**BKS**\n\n";
+    
+    text += "🔵 **EQUIPO AZUL** 🔵\n";
+    if(teams.blue.length === 0) text += "> *(Vacío)*\n";
+    teams.blue.forEach(p => text += `> **${p.role.label}:** ${p.name}\n`);
+    
+    text += "\n🔴 **EQUIPO ROJO** 🔴\n";
+    if(teams.red.length === 0) text += "> *(Vacío)*\n";
+    teams.red.forEach(p => text += `> **${p.role.label}:** ${p.name}\n`);
+
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("¡Equipos copiados exitosamente! Ya puedes pegarlos en Discord.");
+    } catch (err) {
+      console.error('Error al copiar: ', err);
+      alert("Hubo un error al copiar al portapapeles.");
+    }
+  };
+
   return (
     <GameContext.Provider value={{
       players, updatePlayer,
@@ -118,7 +140,8 @@ export const GameProvider = ({ children }) => {
       isSettingsOpen, setIsSettingsOpen,
       isSpinning, setIsSpinning,
       teams, setTeams,
-      playSound, assignWinner
+      playSound, assignWinner,
+      resetGame, copyTeamsToClipboard 
     }}>
       {children}
     </GameContext.Provider>
