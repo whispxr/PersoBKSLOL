@@ -10,7 +10,7 @@ import supportIcon from '../assets/support.png';
 import spinAudio from '../assets/spin.mp3';
 import lockAudio from '../assets/lock.mp3';
 
-const announcerVoices = import.meta.glob('../assets/invocadores/*.mp3', { eager: true });
+const announcerVoices = import.meta.glob('../assets/invocadores/**/*.mp3', { eager: true });
 
 export const GameContext = createContext();
 
@@ -46,13 +46,25 @@ export const GameProvider = ({ children }) => {
         impact.play();
 
         if (winnerName) {
-          const voiceModule = announcerVoices[`../assets/invocadores/${winnerName}.mp3`];
-          if (voiceModule) {
+          const winnerAudios = Object.keys(announcerVoices)
+            .filter(path => {
+              const parts = path.split('/');
+              const aunnouncerName = parts[parts.length - 2];
+              return aunnouncerName.toLowerCase() === winnerName.toLowerCase();
+            })
+            .map(path => announcerVoices[path]);
+
+          if (winnerAudios.length > 0) {
+            const randomIndex = Math.floor(Math.random() * winnerAudios.length);
+            const randomVoiceModule = winnerAudios[randomIndex];
+            
             setTimeout(() => {
-              const voiceSound = new Audio(voiceModule.default);
+              const voiceSound = new Audio(randomVoiceModule.default);
               voiceSound.volume = 1.0; 
               voiceSound.play();
             }, 300);
+          } else {
+            console.log(`No voice lines found for ${winnerName}`);
           }
         }
       }
