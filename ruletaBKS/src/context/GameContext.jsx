@@ -1,5 +1,5 @@
 // src/context/GameContext.jsx
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 
 import topIcon from '../assets/top.png';
 import jungleIcon from '../assets/jungle.png';
@@ -29,12 +29,24 @@ const defaultRoles = [
 
 export const GameProvider = ({ children }) => {
   const [players, setPlayers] = useState(Array(10).fill(''));
+  const [originalPlayers, setOriginalPlayers] = useState(Array(10).fill(''));
   const [roles, setRoles] = useState(defaultRoles);
   const [isSettingsOpen, setIsSettingsOpen] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [teams, setTeams] = useState({ blue: [], red: [] });
+  const hasPlayersBeenSaved = useRef(false);
 
-  const playSound = (type, winnerName = null) => {
+  // Guardar copia de jugadores cuando se cierra la configuración (solo una vez)
+  useEffect(() => {
+    if (!isSettingsOpen && !hasPlayersBeenSaved.current) {
+      setOriginalPlayers([...players]);
+      hasPlayersBeenSaved.current = true;
+    } else if (isSettingsOpen) {
+      hasPlayersBeenSaved.current = false;
+    }
+  }, [isSettingsOpen, players]);
+
+  const playSound = useCallback((type, winnerName = null) => {
     try {
       if (type === 'spin') {
         const sound = new Audio(spinAudio);
@@ -71,42 +83,48 @@ export const GameProvider = ({ children }) => {
     } catch (error) {
       console.error("Error al reproducir el sonido:", error);
     }
-  };
+  }, []);
 
-  const updatePlayer = (index, name) => {
-    const newPlayers = [...players];
-    newPlayers[index] = name;
-    setPlayers(newPlayers);
-  };
+  const updatePlayer = useCallback((index, name) => {
+    setPlayers(prev => {
+      const newPlayers = [...prev];
+      newPlayers[index] = name;
+      return newPlayers;
+    });
+  }, []);
 
-  const toggleRoleActive = (id) => {
-    setRoles(roles.map(r => r.id === id ? { ...r, active: !r.active } : r));
-  };
+  const toggleRoleActive = useCallback((id) => {
+    setRoles(prev => prev.map(r => r.id === id ? { ...r, active: !r.active } : r));
+  }, []);
 
-  const reorderRoles = (startIndex, endIndex) => {
-    const newRoles = Array.from(roles);
-    const [removed] = newRoles.splice(startIndex, 1);
-    newRoles.splice(endIndex, 0, removed);
-    setRoles(newRoles);
-  };
+  const reorderRoles = useCallback((startIndex, endIndex) => {
+    setRoles(prev => {
+      const newRoles = Array.from(prev);
+      const [removed] = newRoles.splice(startIndex, 1);
+      newRoles.splice(endIndex, 0, removed);
+      return newRoles;
+    });
+  }, []);
 
-  const assignWinner = (winnerName) => {
-    const activeRoles = roles.filter(r => r.active);
-    const totalAssigned = teams.blue.length + teams.red.length;
-    const assignedRole = activeRoles[totalAssigned];
+  const assignWinner = useCallback((winnerName) => {
+    setTeams(prevTeams => {
+      const activeRoles = roles.filter(r => r.active);
+      const totalAssigned = prevTeams.blue.length + prevTeams.red.length;
+      const assignedRole = activeRoles[totalAssigned];
 
-    if (!assignedRole) {
-      alert("¡Ya no hay más roles activos disponibles!");
-      return;
-    }
+      if (!assignedRole) {
+        alert("¡Ya no hay más roles activos disponibles!");
+        return prevTeams;
+      }
 
-    const isBlueTurn = teams.blue.length <= teams.red.length;
-    const teamColor = isBlueTurn ? 'blue' : 'red';
+      const isBlueTurn = prevTeams.blue.length <= prevTeams.red.length;
+      const teamColor = isBlueTurn ? 'blue' : 'red';
 
-    setTeams(prev => ({
-      ...prev,
-      [teamColor]: [...prev[teamColor], { name: winnerName, role: assignedRole }]
-    }));
+      return {
+        ...prevTeams,
+        [teamColor]: [...prevTeams[teamColor], { name: winnerName, role: assignedRole }]
+      };
+    });
 
     setPlayers(prev => {
       const newPlayers = [...prev];
@@ -114,18 +132,19 @@ export const GameProvider = ({ children }) => {
       if (indexToRemove !== -1) newPlayers[indexToRemove] = '';
       return newPlayers;
     });
-  };
+  }, [roles]);
 
-  // --- NUEVA FUNCIÓN: REINICIAR ---
-  const resetGame = () => {
+  // --- FUNCIÓN: REINICIAR ---
+  const resetGame = useCallback(() => {
     if(window.confirm("¿Estás seguro de reiniciar la partida? Se borrarán los equipos actuales.")) {
       setTeams({ blue: [], red: [] });
-      setPlayers(Array(10).fill('')); // Vaciamos los inputs
+      setPlayers([...originalPlayers]); // Restaurar jugadores guardados
+      setIsSettingsOpen(false); // Cierra el modal y lleva a la ruleta
     }
-  };
+  }, [originalPlayers]);
 
-  // --- NUEVA FUNCIÓN: COPIAR A DISCORD ---
-  const copyTeamsToClipboard = async () => {
+  // --- FUNCIÓN: COPIAR A DISCORD ---
+  const copyTeamsToClipboard = useCallback(async () => {
     let text = "**BKS**\n\n";
     
     text += "🔵 **EQUIPO AZUL** 🔵\n";
@@ -143,7 +162,7 @@ export const GameProvider = ({ children }) => {
       console.error('Error al copiar: ', err);
       alert("Hubo un error al copiar al portapapeles.");
     }
-  };
+  }, [teams]);
 
   return (
     <GameContext.Provider value={{
