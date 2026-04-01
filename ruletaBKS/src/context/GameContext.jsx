@@ -36,7 +36,7 @@ export const GameProvider = ({ children }) => {
   const [teams, setTeams] = useState({ blue: [], red: [] });
   const hasPlayersBeenSaved = useRef(false);
 
-  // Guardar copia de jugadores cuando se cierra la configuración (solo una vez)
+  // Guardar copia de jugadores cuando se cierra la configuración
   useEffect(() => {
     if (!isSettingsOpen && !hasPlayersBeenSaved.current) {
       setOriginalPlayers([...players]);
@@ -134,16 +134,16 @@ export const GameProvider = ({ children }) => {
     });
   }, [roles]);
 
-  // --- FUNCIÓN: REINICIAR ---
+  // REINICIAR
   const resetGame = useCallback(() => {
     if(window.confirm("¿Estás seguro de reiniciar la partida? Se borrarán los equipos actuales.")) {
       setTeams({ blue: [], red: [] });
-      setPlayers([...originalPlayers]); // Restaurar jugadores guardados
-      setIsSettingsOpen(false); // Cierra el modal y lleva a la ruleta
+      setPlayers([...originalPlayers]); 
+      setIsSettingsOpen(false); 
     }
   }, [originalPlayers]);
 
-  // --- FUNCIÓN: COPIAR A DISCORD ---
+  // COPIAR DISCORD 
   const copyTeamsToClipboard = useCallback(async () => {
     let text = "**BKS**\n\n";
     

@@ -2,39 +2,33 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import { GameContext } from '../../context/GameContext';
 
-// Importamos la pista de música épica
 import epicMusicFile from '../../assets/epic_music.mp3';
 
 export default function Header() {
   const { setIsSettingsOpen } = useContext(GameContext);
   
-  // Estados para el reproductor de música
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.3); // Volumen inicial al 30%
   const audioRef = useRef(null);
 
-  // Inicializamos el audio una sola vez cuando el componente carga
   useEffect(() => {
     audioRef.current = new Audio(epicMusicFile);
     audioRef.current.loop = true; // Que se repita infinitamente
     audioRef.current.volume = volume;
 
-    // Limpieza al desmontar
-    return () => {
+  return () => {
       if (audioRef.current) {
         audioRef.current.pause();
       }
     };
   }, []);
 
-  // Efecto para actualizar el volumen en tiempo real al mover el slider
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
     }
   }, [volume]);
 
-  // Función para alternar Play/Pause
   const togglePlay = () => {
     if (isPlaying) {
       audioRef.current.pause();
@@ -47,11 +41,9 @@ export default function Header() {
   };
 
   return (
-    // Header fijo con fondo profundo, borde dorado superior y sombra azul/cian
-    <header className="h-[80px] shrink-0 border-t border-lol-gold bg-lol-bg/95 flex items-center justify-between px-8 shadow-md shadow-lol-blue/10 relative z-10">
+    <header className="h-20 shrink-0 border-t border-lol-gold bg-lol-bg/95 flex items-center justify-between px-8 shadow-md shadow-lol-blue/10 relative z-10">
       
-      {/* Controles de la izquierda */}
-      <div className="flex items-center gap-4 w-[250px] justify-start">
+      <div className="flex items-center gap-4 w-62.5 justify-start">
         <button 
           onClick={togglePlay}
           className={`px-4 py-2 bg-lol-gray border-2 text-xs font-black uppercase tracking-widest rounded transition-all shadow-sm w-24 ${
@@ -64,7 +56,6 @@ export default function Header() {
           {isPlaying ? '⏸ PAUSA' : '▶ PLAY'}
         </button>
         
-        {/* Volumen con brillo Cian */}
         <div className="flex items-center gap-2">
           <span className="text-lol-blue drop-shadow-[0_0_5px_rgba(10,200,185,0.8)]">🔊</span>
           <input 
@@ -88,8 +79,7 @@ export default function Header() {
         </h1>
       </div>
 
-      {/* Controles de la derecha */}
-      <div className="flex items-center w-[250px] justify-end">
+      <div className="flex items-center w-62.5 justify-end">
         <button 
           onClick={() => setIsSettingsOpen(true)}
           className="w-10 h-10 flex items-center justify-center bg-lol-gray border-2 border-lol-goldLight/20 rounded hover:bg-lol-gray hover:border-lol-blue transition-all text-lol-goldLight text-xl shadow-md"

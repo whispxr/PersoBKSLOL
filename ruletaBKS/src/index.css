@@ -33,15 +33,13 @@
     padding: 0;
     width: 100vw;
     height: 100vh;
-    overflow: hidden; /* Elimina la barra de scroll */
+    overflow: hidden; 
     background-color: var(--color-lol-bg);
     color: var(--color-lol-goldLight);
     
-    /* Fuente pro-level limpia (Oswald) */
     font-family: 'Montserrat', 'Oswald', 'Open Sans', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
 
-  /* Para que todo el texto sea uppercase y tracking-widest por defecto */
   * {
     @apply uppercase tracking-widest text-xs;
   }

@@ -10,12 +10,9 @@ export default function App() {
   const { isSettingsOpen } = useContext(GameContext);
 
   return (
-    // Fondo profundo BKS Pro Draft (Azul marino/Negro) con patrón Hextech sutil (decorativo)
     <div className="h-screen w-screen overflow-hidden bg-lol-bg text-lol-goldLight font-sans relative selection:bg-lol-blue selection:text-white uppercase tracking-widest text-xs">
       
-      {/* Patrón Hextech decorativo de fondo (Simulado con líneas radiales y degradado) */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-lol-bg via-lol-bg/95 to-lol-bg opacity-30 z-0">
-        {/* Aquí en el futuro se podría usar una imagen SVG Hextech real para mayor realismo */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-lol-bg via-lol-bg/95 to-lol-bg opacity-30 z-0">
         <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0%_1px,transparent_1px_100%)] opacity-10"></div>
       </div>
 

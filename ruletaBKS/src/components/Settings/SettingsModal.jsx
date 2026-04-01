@@ -3,7 +3,6 @@ import { useContext } from 'react';
 import { GameContext } from '../../context/GameContext';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-// La lista de tu grupo de juego
 const FRIENDS_LIST = [
   "Shampa", "Samuel", "Leo", "Kaled", "Web", "Naika", 
   "Yula", "Fadi", "Ficha", "Matute", "Potac", "Simon", "Lamoshca",
@@ -18,7 +17,6 @@ export default function SettingsModal() {
     reorderRoles(result.source.index, result.destination.index);
   };
 
-  // Función para añadir al jugador con un solo clic en el primer input vacío
   const handleQuickAdd = (name) => {
     if (players.includes(name)) return; // Evitar que se agregue dos veces
     
@@ -30,7 +28,6 @@ export default function SettingsModal() {
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      {/* Agrandé un poco el ancho (w-[950px]) para que quepan bien los botones */}
       <div className="w-[950px] max-h-[85vh] flex flex-col bg-lol-gray border-2 border-lol-gold rounded-lg shadow-[0_0_30px_rgba(200,155,60,0.15)] overflow-hidden">
         
         <div className="flex justify-between items-center p-4 border-b border-lol-border bg-lol-bg">
@@ -40,11 +37,9 @@ export default function SettingsModal() {
 
         <div className="flex-1 flex flex-row p-6 gap-8 overflow-hidden h-[550px]">
           
-          {/* COLUMNA 1: JUGADORES */}
           <div className="flex-1 flex flex-col overflow-y-auto pr-2 custom-scrollbar">
             <h3 className="text-xl text-lol-blue font-bold mb-4 uppercase border-b border-lol-border/50 pb-2">Jugadores</h3>
             
-            {/* --- PANEL DE AÑADIDO RÁPIDO --- */}
             <div className="mb-6 bg-lol-bg border border-lol-border p-3 rounded">
               <p className="text-xs text-lol-goldLight/50 mb-3 uppercase tracking-wider">Roster (Clic para añadir):</p>
               <div className="flex flex-wrap gap-2">
@@ -68,7 +63,6 @@ export default function SettingsModal() {
               </div>
             </div>
 
-            {/* Lista invisible para que el input nativo también tenga autocompletado */}
             <datalist id="friends-list">
               {FRIENDS_LIST.map(friend => <option key={friend} value={friend} />)}
             </datalist>
@@ -85,7 +79,6 @@ export default function SettingsModal() {
                     placeholder={`Invocador ${index + 1}`}
                     className="flex-1 bg-lol-bg border border-lol-border rounded px-3 py-2 text-lol-goldLight focus:outline-none focus:border-lol-blue transition-all"
                   />
-                  {/* Botón para vaciar rápido un input si te equivocas */}
                   {player && (
                     <button 
                       onClick={() => updatePlayer(index, '')}
@@ -100,7 +93,6 @@ export default function SettingsModal() {
             </div>
           </div>
 
-          {/* COLUMNA 2: ROLES CON DRAG & DROP */}
           <div className="flex-1 flex flex-col overflow-hidden">
              <h3 className="text-xl text-lol-gold font-bold mb-4 uppercase border-b border-lol-border/50 pb-2">Orden de Roles (Arrastra)</h3>
              

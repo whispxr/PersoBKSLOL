@@ -3,7 +3,6 @@ import { useContext, useState } from 'react';
 import { GameContext } from '../../context/GameContext';
 
 export default function RouletteCenter() {
-  // AQUÍ ESTABA EL ERROR: Faltaba importar resetGame y copyTeamsToClipboard
   const { 
     players, isSpinning, setIsSpinning, 
     playSound, assignWinner, 
@@ -46,13 +45,10 @@ export default function RouletteCenter() {
   return (
     <div className="flex flex-col items-center justify-center w-full h-full relative">
       
-      {/* --- CONTENEDOR VISUAL DE LA RULETA (Con Sombra CIAN de Fondo) --- */}
       <div className="relative flex items-center justify-center mb-16 shadow-[0_0_80px_rgba(10,200,185,0.2)] rounded-full">
         
-        {/* Anillo de Bisel Dorado Exterior (Static) */}
         <div className="absolute w-[390px] h-[390px] rounded-full border-4 border-[#c89b3c] shadow-[inset_0_0_15px_rgba(0,0,0,0.6)]" />
         
-        {/* Puntero Indicador Dorado Metálico (Static en la parte superior) */}
         <div 
           className="absolute top-[-15px] w-8 h-12 z-30 shadow-[0_0_15px_rgba(200,155,60,0.7)]" 
           style={{ 
@@ -62,7 +58,6 @@ export default function RouletteCenter() {
           }} 
         />
         
-        {/* El Disco de la Ruleta (Este es el que Gira) */}
         <div 
           className="w-[360px] h-[360px] rounded-full border-[6px] border-[#c89b3c] flex items-center justify-center shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#0a1428] to-[#010a13]"
           style={{ 
@@ -70,14 +65,11 @@ export default function RouletteCenter() {
             transition: 'transform 6s cubic-bezier(0.25, 0.1, 0.15, 1)' 
           }}
         >
-          {/* Fondo Texturizado Metálico con líneas radiales doradas */}
           <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,#c89b3c_0%_1px,transparent_1px_100%)] opacity-30" />
           
-          {/* Anillos concéntricos dorados del draft client */}
           <div className="absolute w-[320px] h-[320px] rounded-full border-2 border-[#c89b3c]/20" />
           <div className="absolute w-[280px] h-[280px] rounded-full border border-[#c89b3c]/10" />
           
-          {/* Renderizado de los Nombres de los Jugadores */}
           {activePlayers.length > 0 ? (
             activePlayers.map((player, index) => {
               const rotateAngle = index * sliceAngle;
@@ -99,7 +91,6 @@ export default function RouletteCenter() {
           )}
         </div>
 
-        {/* --- CENTRO ESTÁTICO DE LA RULETA (No gira) con Bisel Dorado y Gorila --- */}
         <div className="absolute w-[110px] h-[110px] rounded-full bg-[#010a13] border-[6px] border-[#c89b3c] flex items-center justify-center z-20 shadow-[inset_0_0_30px_rgba(0,0,0,0.9),0_0_15px_rgba(10,200,185,0.3)]">
           <div className="absolute w-[90px] h-[90px] rounded-full border-2 border-[#c89b3c]/50" />
           <div className="absolute w-[80px] h-[80px] rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-lol-blue/20 to-transparent" />
@@ -110,7 +101,6 @@ export default function RouletteCenter() {
         </div>
       </div>
 
-      {/* BOTÓN PRINCIPAL DE GIRAR */}
       <button
         onClick={handleSpin}
         disabled={isSpinning || activePlayers.length === 0}
@@ -120,7 +110,6 @@ export default function RouletteCenter() {
         <span className="relative z-10">{isSpinning ? 'Girando...' : 'Girar Ruleta'}</span>
       </button>
 
-      {/* BOTONES DE ACCIÓN RÁPIDA */}
       <div className="flex gap-4 mt-8 relative z-10">
         <button 
           onClick={resetGame} 
