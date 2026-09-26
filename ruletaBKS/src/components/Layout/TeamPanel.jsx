@@ -1,46 +1,68 @@
 // src/components/Layout/TeamPanel.jsx
+// Columna de equipo: slots asignados y slots pendientes segun el orden de roles
 import { useContext } from 'react';
 import { GameContext } from '../../context/GameContext';
-import PlayerCard from './PlayerCard'; 
+import PlayerCard from './PlayerCard';
 
 export default function TeamPanel({ team, title }) {
-  const { teams } = useContext(GameContext);
-  
+  const { teams, activeRoles, isSpinning } = useContext(GameContext);
+
   const roster = teams[team];
   const isBlue = team === 'blue';
-  
-  const borderColor = isBlue ? 'border-lol-blue' : 'border-lol-red';
-  const textColor = isBlue ? 'text-lol-blue' : 'text-lol-red';
 
-  const marginPlacement = isBlue ? 'ml-12 mr-4' : 'mr-12 ml-4';
+  // Los roles activos se reparten alternando: Azul toma los pares, Rojo los impares
+  const teamRoles = activeRoles.filter((_, i) => (i % 2 === 0) === isBlue);
+  const pendingRoles = teamRoles.slice(roster.length);
+  const totalAssigned = teams.blue.length + teams.red.length;
+  const isBlueTurn = teams.blue.length <= teams.red.length;
+  const isTeamTurn = isBlueTurn === isBlue && totalAssigned < activeRoles.length;
+  const totalSlots = roster.length + pendingRoles.length;
+
+  const textColor = isBlue ? 'text-lol-blue' : 'text-lol-red';
+  const accentBar = isBlue ? 'left-0 bg-lol-blue shadow-[0_0_12px_#0ac8b9]' : 'right-0 bg-lol-red shadow-[0_0_12px_#ff4655]';
+  const panelTint = isBlue ? 'bg-linear-to-r from-lol-blue/10 via-lol-panel/70 to-lol-panel/30' : 'bg-linear-to-l from-lol-red/10 via-lol-panel/70 to-lol-panel/30';
+  const placement = isBlue ? 'ml-[2vw] mr-2' : 'mr-[2vw] ml-2';
 
   return (
-    <aside className={`w-85 shrink-0 h-145 ${marginPlacement} my-auto flex flex-col relative z-10`}>
-      
-      <div className={`flex-1 flex flex-col bg-lol-gray/90 border ${borderColor} rounded-sm relative shadow-[inset_0_0_50px_rgba(0,0,0,0.8),0_0_20px_rgba(0,0,0,0.6)] p-6`}>
-        
-        <div className="absolute top-2.5 left-2.5 right-2.5 bottom-[10px] border border-lol-gold rounded-sm shadow-[0_0_3px_#c89b3c]"></div>
-        
-        <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-lol-gold rounded-tl-sm -translate-x-[4px] -translate-y-[4px]"></div>
-        <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-lol-gold rounded-tr-sm translate-x-[4px] -translate-y-1"></div>
-        <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-lol-gold rounded-bl-sm -translate-x-1 translate-y-1"></div>
-        <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-lol-gold rounded-br-sm translate-x-[4px] translate-y-[4px]"></div>
+    <aside className={`w-[clamp(210px,23vw,360px)] shrink-0 ${placement} my-auto flex flex-col relative z-10`}>
 
-        <div className="absolute top-[4px] left-[4px] right-[4px] bottom-[4px] border border-lol-goldLight/20 rounded-sm"></div>
+      <div className={`flex items-end justify-between px-1 mb-3 ${isBlue ? '' : 'flex-row-reverse'}`}>
+        <div className={`flex flex-col ${isBlue ? 'items-start' : 'items-end'}`}>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-lol-muted">
+            {isBlue ? 'Lado Azul' : 'Lado Rojo'}
+          </span>
+          <h2 className={`font-display text-[clamp(16px,1.7vw,24px)] font-bold uppercase tracking-[0.15em] whitespace-nowrap ${textColor} drop-shadow-[0_0_10px_currentColor]`}>
+            {title}
+          </h2>
+        </div>
+        <span className="font-display text-lg font-bold text-lol-goldMid tabular-nums">
+          {roster.length}<span className="text-lol-goldDark">/{totalSlots}</span>
+        </span>
+      </div>
 
-        <h2 className={`text-xl font-black uppercase tracking-[0.2em] text-center mb-6 ${textColor} drop-shadow-md`}>
-          {title}
-        </h2>
+      <div className={`relative frame-gold-thin ${panelTint} shadow-[0_0_30px_rgba(0,0,0,0.7),inset_0_0_40px_rgba(0,0,0,0.6)]`}>
+        <div className={`absolute inset-y-0 w-[3px] ${accentBar}`} />
 
-        <div className="flex-1 overflow-y-hidden space-y-3 relative z-10">
-          {roster.length === 0 ? (
-            <div className="text-sm text-center text-lol-goldLight/30 mt-10 italic">
-              Esperando el sorteo...
+        <div className="max-h-[calc(100vh-240px)] overflow-y-auto custom-scrollbar flex flex-col divide-y divide-lol-goldDeep/60">
+          {totalSlots === 0 ? (
+            <div className="h-[76px] flex items-center justify-center text-[11px] font-semibold uppercase tracking-[0.25em] text-lol-mutedDark">
+              Sin roles asignados
             </div>
           ) : (
-            roster.map((player, index) => (
-              <PlayerCard key={index} player={player} isBlue={isBlue} />
-            ))
+            <>
+              {roster.map((player, index) => (
+                <PlayerCard key={index} player={player} role={player.role} isBlue={isBlue} />
+              ))}
+              {pendingRoles.map((role, index) => (
+                <PlayerCard
+                  key={`pending-${role.id}`}
+                  role={role}
+                  isBlue={isBlue}
+                  isPicking={isTeamTurn && index === 0}
+                  isSpinning={isSpinning}
+                />
+              ))}
+            </>
           )}
         </div>
       </div>

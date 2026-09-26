@@ -1,12 +1,15 @@
 // src/components/Layout/Header.jsx
+// Barra superior: musica, titulo con fase actual del sorteo y acceso a configuracion
 import { useContext, useState, useEffect, useRef } from 'react';
 import { GameContext } from '../../context/GameContext';
+import BksEmblem from './BksEmblem';
+import { PlayIcon, PauseIcon, VolumeIcon, GearIcon } from './Icons';
 
 import epicMusicFile from '../../assets/epic_music.mp3';
 
 export default function Header() {
-  const { setIsSettingsOpen } = useContext(GameContext);
-  
+  const { setIsSettingsOpen, activeRoles, gameMode, teams, isSpinning, isAutoSpinning } = useContext(GameContext);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.3); // Volumen inicial al 30%
   const audioRef = useRef(null);
@@ -40,54 +43,104 @@ export default function Header() {
     setIsPlaying(!isPlaying);
   };
 
+  const totalAssigned = teams.blue.length + teams.red.length;
+  const nextRole = activeRoles[totalAssigned];
+  const isBlueTurn = teams.blue.length <= teams.red.length;
+  const turnTeam = isBlueTurn ? 'Equipo Azul' : 'Equipo Rojo';
+  const turnColor = isBlueTurn ? 'text-lol-blue' : 'text-lol-red';
+
+  let phaseTitle = 'Sorteo completado';
+  if (!nextRole && totalAssigned === 0) phaseTitle = 'Sin roles activos';
+  else if (nextRole && isAutoSpinning) phaseTitle = 'Sorteo automático';
+  else if (nextRole && isSpinning) phaseTitle = 'Sorteando invocador';
+  else if (nextRole) phaseTitle = 'Elige tu invocador';
+
   return (
-    <header className="h-20 shrink-0 border-t border-lol-gold bg-lol-bg/95 flex items-center justify-between px-8 shadow-md shadow-lol-blue/10 relative z-10">
-      
-      <div className="flex items-center gap-4 w-62.5 justify-start">
-        <button 
+    <header className="relative z-20 h-24 shrink-0 grid grid-cols-[1fr_auto_1fr] items-center px-8 bg-linear-to-b from-lol-bg via-lol-bg/90 to-lol-panel/40">
+
+      <div className="flex items-center gap-5 justify-self-start">
+        <button
           onClick={togglePlay}
-          className={`px-4 py-2 bg-lol-gray border-2 text-xs font-black uppercase tracking-widest rounded transition-all shadow-sm w-24 ${
-            isPlaying 
-              ? 'border-lol-blue text-white shadow-[0_0_10px_rgba(10,200,185,0.4)]' 
-              : 'border-lol-border/50 text-lol-gold hover:border-lol-blue hover:text-white'
-          }`}
+          className={`btn-hex w-28 ${isPlaying ? 'is-active' : ''}`}
           title="Reproducir/Pausar Música Épica"
         >
-          {isPlaying ? '⏸ PAUSA' : '▶ PLAY'}
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+          {isPlaying ? 'Pausa' : 'Play'}
         </button>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-lol-blue drop-shadow-[0_0_5px_rgba(10,200,185,0.8)]">🔊</span>
-          <input 
-            type="range" 
-            min="0" 
-            max="1" 
-            step="0.01" 
-            value={volume} 
+
+        <div className="flex items-center gap-2.5 text-lol-goldMid">
+          <VolumeIcon className="w-4 h-4" />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-20 h-1.5 accent-lol-blue cursor-pointer bg-lol-gray rounded-lg appearance-none shadow-[0_0_10px_rgba(10,200,185,0.6)]" 
+            className="range-hex w-24"
+            style={{ '--fill': `${volume * 100}%` }}
+            aria-label="Volumen de la música"
           />
+          <span className="w-8 text-[11px] font-semibold tabular-nums text-lol-muted">{Math.round(volume * 100)}</span>
         </div>
       </div>
-      
-      {/* Título Central y Logo del Gorila (Pro Draft Look) */}
-      <div className="flex items-center gap-2">
-        {/* Gorila Emoji detallado (Mascota BKS) */}
-        <span className="text-5xl filter drop-shadow-[0_0_8px_rgba(200,155,60,0.8)]">🦍</span>
-        <h1 className="text-4xl font-black tracking-[0.2em] text-lol-goldLight drop-shadow-md font-beaufort">
-          BKS LOL ROULETTE
-        </h1>
+
+      <div className="flex flex-col items-center gap-1.5 px-6">
+        <div className="flex items-center gap-3">
+          <BksEmblem className="w-9 h-9" glow />
+          <h1 className="font-display text-[26px] leading-none font-bold tracking-[0.18em] text-gold-gradient">
+            BKS LoL Roulette
+          </h1>
+          <span className="px-2 py-0.5 border border-lol-goldDark bg-lol-bg/80 text-[10px] font-bold uppercase tracking-[0.2em] text-lol-goldMid whitespace-nowrap">
+            {gameMode === '1v1' ? '1 vs 1' : '5 vs 5'}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.3em]">
+          <span className="h-px w-10 bg-linear-to-r from-transparent to-lol-goldDark" />
+          <span className="text-lol-goldLight/90">{phaseTitle}</span>
+          {nextRole && (
+            <>
+              <span className="text-lol-goldDark">&#9670;</span>
+              <span className={turnColor}>{turnTeam}</span>
+              <span className="text-lol-muted">{nextRole.label}</span>
+            </>
+          )}
+          <span className="h-px w-10 bg-linear-to-l from-transparent to-lol-goldDark" />
+        </div>
+
+        <div className="flex items-center gap-1.5" aria-label={`Pick ${Math.min(totalAssigned + 1, activeRoles.length)} de ${activeRoles.length}`}>
+          {activeRoles.map((role, i) => {
+            const pipColor = i % 2 === 0 ? 'bg-lol-blue border-lol-blue' : 'bg-lol-red border-lol-red';
+            const isDone = i < totalAssigned;
+            const isCurrent = i === totalAssigned;
+            return (
+              <span
+                key={role.id}
+                title={`${i + 1}. ${role.label}`}
+                className={`w-2 h-2 rotate-45 border ${
+                  isDone ? pipColor : isCurrent ? `${pipColor} pip-current` : 'border-lol-goldDark/70 bg-transparent'
+                }`}
+              />
+            );
+          })}
+        </div>
       </div>
 
-      <div className="flex items-center w-62.5 justify-end">
-        <button 
+      <div className="flex items-center justify-self-end">
+        <button
           onClick={() => setIsSettingsOpen(true)}
-          className="w-10 h-10 flex items-center justify-center bg-lol-gray border-2 border-lol-goldLight/20 rounded hover:bg-lol-gray hover:border-lol-blue transition-all text-lol-goldLight text-xl shadow-md"
+          disabled={isSpinning || isAutoSpinning}
+          className="btn-hex"
           title="Configurar Partida"
         >
-          ⚙️
+          <GearIcon className="w-4 h-4" />
+          Configurar
         </button>
       </div>
+
+      <div className="absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent via-lol-goldDark to-transparent" />
+      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-lol-bg border border-lol-goldMid" />
     </header>
   );
 }

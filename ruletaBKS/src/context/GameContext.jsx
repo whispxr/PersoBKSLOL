@@ -1,5 +1,6 @@
 // src/context/GameContext.jsx
-import { createContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { playClip, preloadClip, stopClip } from './audioEngine';
 
 import topIcon from '../assets/top.png';
 import jungleIcon from '../assets/jungle.png';
@@ -11,6 +12,30 @@ import spinAudio from '../assets/spin.mp3';
 import lockAudio from '../assets/lock.mp3';
 
 const announcerVoices = import.meta.glob('../assets/invocadores/**/*.mp3', { eager: true });
+const versusVoices = Object.values(import.meta.glob('../assets/versus/*.mp3', { eager: true })).map(m => m.default);
+
+const getVoiceFor = (name) => {
+  const voices = Object.keys(announcerVoices)
+    .filter(path => {
+      const parts = path.split('/');
+      return parts[parts.length - 2].toLowerCase() === name.toLowerCase();
+    })
+    .map(path => announcerVoices[path].default);
+  return voices.length > 0 ? voices[Math.floor(Math.random() * voices.length)] : null;
+};
+
+// Precarga todo al inicio para que ningun sonido tenga que descargarse al momento de sonar
+[spinAudio, lockAudio, ...versusVoices, ...Object.values(announcerVoices).map(m => m.default)].forEach(preloadClip);
+
+const VOICE_DELAY_MS = 100;
+
+// Una sola variante de "Versus" por partida: se sortea de nuevo solo en el primer pick
+const pickVersus = (ref, isNewGame = false) => {
+  if (isNewGame || !ref.current) {
+    ref.current = versusVoices[Math.floor(Math.random() * versusVoices.length)] ?? null;
+  }
+  return ref.current;
+};
 
 export const GameContext = createContext();
 
@@ -27,14 +52,29 @@ const defaultRoles = [
   { id: 'sup2', label: 'Support 2', active: true, icon: supportIcon },
 ];
 
+// En 1vs1 se sortean solo dos invocadores que se enfrentan en Mid
+const duelRoles = [
+  { id: 'duel1', label: 'Mid', active: true, icon: midIcon },
+  { id: 'duel2', label: 'Mid', active: true, icon: midIcon },
+];
+
 export const GameProvider = ({ children }) => {
   const [players, setPlayers] = useState(Array(10).fill(''));
   const [originalPlayers, setOriginalPlayers] = useState(Array(10).fill(''));
   const [roles, setRoles] = useState(defaultRoles);
   const [isSettingsOpen, setIsSettingsOpen] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isAutoSpinning, setIsAutoSpinning] = useState(false);
+  const [gameMode, setGameMode] = useState('5v5');
   const [teams, setTeams] = useState({ blue: [], red: [] });
+  const [isAnnouncing, setIsAnnouncing] = useState(false);
   const hasPlayersBeenSaved = useRef(false);
+  const versusVoiceRef = useRef(null);
+
+  const activeRoles = useMemo(
+    () => (gameMode === '1v1' ? duelRoles : roles.filter(r => r.active)),
+    [gameMode, roles]
+  );
 
   // Guardar copia de jugadores cuando se cierra la configuración
   useEffect(() => {
@@ -46,44 +86,43 @@ export const GameProvider = ({ children }) => {
     }
   }, [isSettingsOpen, players]);
 
-  const playSound = useCallback((type, winnerName = null) => {
-    try {
-      if (type === 'spin') {
-        const sound = new Audio(spinAudio);
-        sound.volume = 0.2; 
-        sound.play();
-      } else if (type === 'lock_in') {
-        const impact = new Audio(lockAudio);
-        impact.volume = 0.4; 
-        impact.play();
+  // Reproduce varios audios uno tras otro (ej: "Samuel" -> "Versus" -> "Matute")
+  const playSequence = useCallback(async (urls) => {
+    setIsAnnouncing(true);
+    for (const url of urls) {
+      await playClip(url, 1.0);
+    }
+    setIsAnnouncing(false);
+  }, []);
 
-        if (winnerName) {
-          const winnerAudios = Object.keys(announcerVoices)
-            .filter(path => {
-              const parts = path.split('/');
-              const aunnouncerName = parts[parts.length - 2];
-              return aunnouncerName.toLowerCase() === winnerName.toLowerCase();
-            })
-            .map(path => announcerVoices[path]);
+  // matchup.versus: 'start' = suena al girar (5v5 manual), 'end' = suena antes del nombre del rival (1v1 y 5v5 auto)
+  const playSound = useCallback((type, winnerName = null, matchup = {}) => {
+    if (type === 'spin') {
+      playClip(spinAudio, 0.2);
 
-          if (winnerAudios.length > 0) {
-            const randomIndex = Math.floor(Math.random() * winnerAudios.length);
-            const randomVoiceModule = winnerAudios[randomIndex];
-            
-            setTimeout(() => {
-              const voiceSound = new Audio(randomVoiceModule.default);
-              voiceSound.volume = 1.0; 
-              voiceSound.play();
-            }, 300);
-          } else {
-            console.log(`No voice lines found for ${winnerName}`);
-          }
+      const versus = matchup.versus === 'start' ? pickVersus(versusVoiceRef) : null;
+      if (versus) setTimeout(() => playClip(versus, 1.0), 200);
+    } else if (type === 'lock_in') {
+      stopClip(spinAudio);
+      playClip(lockAudio, 0.4);
+
+      if (matchup.isFirstPick) pickVersus(versusVoiceRef, true);
+      const versus = matchup.versus === 'end' ? pickVersus(versusVoiceRef) : null;
+
+      if (winnerName) {
+        const winnerVoice = getVoiceFor(winnerName);
+
+        if (winnerVoice && versus) {
+          setIsAnnouncing(true);
+          setTimeout(() => playSequence([versus, winnerVoice]), VOICE_DELAY_MS);
+        } else if (winnerVoice) {
+          setTimeout(() => playClip(winnerVoice, 1.0), VOICE_DELAY_MS);
+        } else {
+          console.log(`No voice lines found for ${winnerName}`);
         }
       }
-    } catch (error) {
-      console.error("Error al reproducir el sonido:", error);
     }
-  }, []);
+  }, [playSequence]);
 
   const updatePlayer = useCallback((index, name) => {
     setPlayers(prev => {
@@ -108,7 +147,6 @@ export const GameProvider = ({ children }) => {
 
   const assignWinner = useCallback((winnerName) => {
     setTeams(prevTeams => {
-      const activeRoles = roles.filter(r => r.active);
       const totalAssigned = prevTeams.blue.length + prevTeams.red.length;
       const assignedRole = activeRoles[totalAssigned];
 
@@ -132,20 +170,32 @@ export const GameProvider = ({ children }) => {
       if (indexToRemove !== -1) newPlayers[indexToRemove] = '';
       return newPlayers;
     });
-  }, [roles]);
+  }, [activeRoles]);
 
   // REINICIAR
   const resetGame = useCallback(() => {
     if(window.confirm("¿Estás seguro de reiniciar la partida? Se borrarán los equipos actuales.")) {
+      setIsAutoSpinning(false);
       setTeams({ blue: [], red: [] });
-      setPlayers([...originalPlayers]); 
-      setIsSettingsOpen(false); 
+      setPlayers([...originalPlayers]);
+      setIsSettingsOpen(false);
     }
   }, [originalPlayers]);
 
-  // COPIAR DISCORD 
+  // Cambiar de modo invalida los equipos ya sorteados
+  const changeGameMode = useCallback((mode) => {
+    if (mode === gameMode) return;
+    setGameMode(mode);
+    setIsAutoSpinning(false);
+    if (teams.blue.length > 0 || teams.red.length > 0) {
+      setTeams({ blue: [], red: [] });
+      setPlayers([...originalPlayers]);
+    }
+  }, [gameMode, teams, originalPlayers]);
+
+  // COPIAR DISCORD
   const copyTeamsToClipboard = useCallback(async () => {
-    let text = "**BKS**\n\n";
+    let text = gameMode === '1v1' ? "**BKS · 1vs1**\n\n" : "**BKS**\n\n";
     
     text += "🔵 **EQUIPO AZUL** 🔵\n";
     if(teams.blue.length === 0) text += "> *(Vacío)*\n";
@@ -162,14 +212,17 @@ export const GameProvider = ({ children }) => {
       console.error('Error al copiar: ', err);
       alert("Hubo un error al copiar al portapapeles.");
     }
-  }, [teams]);
+  }, [teams, gameMode]);
 
   return (
     <GameContext.Provider value={{
       players, updatePlayer,
-      roles, setRoles, toggleRoleActive, reorderRoles,
+      roles, setRoles, toggleRoleActive, reorderRoles, activeRoles,
+      gameMode, changeGameMode,
       isSettingsOpen, setIsSettingsOpen,
       isSpinning, setIsSpinning,
+      isAutoSpinning, setIsAutoSpinning,
+      isAnnouncing,
       teams, setTeams,
       playSound, assignWinner,
       resetGame, copyTeamsToClipboard 
